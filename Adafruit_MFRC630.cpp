@@ -826,7 +826,7 @@ uint8_t Adafruit_MFRC630::iso14443aSelect(uint8_t *uid, uint8_t *sak) {
   DEBUG_PRINTLN(F("B. Checking cascade level (collision detection)."));
   uint8_t cascadelvl;
   for (cascadelvl = 1; cascadelvl <= 3; cascadelvl++) {
-    uint8_t cmd;
+    uint8_t cmd = 0;
     uint8_t kbits = 0;                        /* Bits known in UID so far. */
     uint8_t send_req[7] = {0};                /* TX buffer */
     uint8_t *uid_this_level = &(send_req[2]); /* UID pointer */
@@ -1091,6 +1091,7 @@ uint8_t Adafruit_MFRC630::iso14443aSelect(uint8_t *uid, uint8_t *sak) {
       }
 
       /* Finally, return the length of the UID that's now at the uid pointer. */
+      *sak = sak_value;
       return cascadelvl * 3 + 1;
     }
 
@@ -1482,3 +1483,20 @@ uint16_t Adafruit_MFRC630::ntagWritePage(uint16_t pagenum, uint8_t *buf) {
   /* Use the Mifare write, which is compatible with the NTAG cards. */
   return mifareWriteBlock(pagenum, buf) == 16 ? 4 : 0;
 }
+
+
+
+
+//KKK
+void Adafruit_MFRC630::EEPROMRead(uint16_t address, uint8_t length, uint8_t* buffer)
+{
+  uint8_t params[3] = {(uint8_t)(address & 0x0F00) >> 8, (uint8_t)(address & 0x00FF), length};
+
+  /* Send the command */
+  writeCommand(MFRC630_CMD_READE2, 3, params);
+
+  // Receive EEPROM Bytes through the FIFO
+  readFIFO(length, buffer);
+}
+
+
