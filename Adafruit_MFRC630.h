@@ -4,12 +4,12 @@
 #ifndef __ADAFRUIT_MFRC630_H__
 #define __ADAFRUIT_MFRC630_H__
 
-#include "Adafruit_MFRC630_consts.h"
-#include "Adafruit_MFRC630_regs.h"
 #include "Arduino.h"
 #include <SPI.h>
 #include <Stream.h>
 #include <Wire.h>
+#include "Adafruit_MFRC630_consts.h"
+#include "Adafruit_MFRC630_regs.h"
 
 /*!
  * @brief MFRC630 I2C Address
@@ -304,6 +304,12 @@ public:
    */
   uint16_t ntagWritePage(uint16_t pagenum, uint8_t *buf);
 
+  //KKK
+  void EEPROMRead(uint16_t address, uint8_t length, uint8_t* buffer);
+
+  //KKK
+  void write8(byte reg, byte value);
+
 private:
   int8_t _pdown;
   uint8_t _i2c_addr;
@@ -312,7 +318,7 @@ private:
   int8_t _cs;
   enum mfrc630_transport _transport;
 
-  void write8(byte reg, byte value);
+  //KKK void write8(byte reg, byte value);
   void writeBuffer(byte reg, uint16_t len, uint8_t *buffer);
   byte read8(byte reg);
 
