@@ -4,12 +4,13 @@
 #ifndef __ADAFRUIT_MFRC630_H__
 #define __ADAFRUIT_MFRC630_H__
 
-#include "Arduino.h"
 #include <SPI.h>
 #include <Stream.h>
 #include <Wire.h>
+
 #include "Adafruit_MFRC630_consts.h"
 #include "Adafruit_MFRC630_regs.h"
+#include "Arduino.h"
 
 /*!
  * @brief MFRC630 I2C Address
@@ -21,74 +22,68 @@
  * NOTE: Setting this macro above RELEASE may require more SRAM than small
  *       MCUs like the Atmel 32u4 can provide!
  */
-#define MFRC630_VERBOSITY_RELEASE (0) //!< No debug output
-#define MFRC630_VERBOSITY_DEBUG (1)   //!< Debug message output
-#define MFRC630_VERBOSITY_TRACE (2)   //!< Full packet trace dumps
-#define MFRC630_VERBOSITY                                                      \
-  (MFRC630_VERBOSITY_RELEASE) //!< Sets verbosity variable
+#define MFRC630_VERBOSITY_RELEASE (0)                          //!< No debug output
+#define MFRC630_VERBOSITY_DEBUG   (1)                          //!< Debug message output
+#define MFRC630_VERBOSITY_TRACE   (2)                          //!< Full packet trace dumps
+#define MFRC630_VERBOSITY         (MFRC630_VERBOSITY_RELEASE)  //!< Sets verbosity variable
 
-#define MFRC630_ALWAYS_DISP_ERRORS (1) //!< Sets error output
+#define MFRC630_ALWAYS_DISP_ERRORS (1)  //!< Sets error output
 
 /* Macro for debug output */
 #if MFRC630_VERBOSITY >= MFRC630_VERBOSITY_DEBUG
-#define DEBUG_PRINT(...) Serial.print(__VA_ARGS__)
-#define DEBUG_PRINTLN(...) Serial.println(__VA_ARGS__)
-#define DEBUG_TIMESTAMP()                                                      \
-  Serial.print(F("\tD [+"));                                                   \
-  Serial.print(millis());                                                      \
-  Serial.print(F("ms] "));
+  #define DEBUG_PRINT(...)   Serial.print(__VA_ARGS__)
+  #define DEBUG_PRINTLN(...) Serial.println(__VA_ARGS__)
+  #define DEBUG_TIMESTAMP()    \
+    Serial.print(F("\tD [+")); \
+    Serial.print(millis());    \
+    Serial.print(F("ms] "));
 #else
-#define DEBUG_PRINT(...)     //!< Disables debug printing
-#define DEBUG_PRINTLN(...)   //!< Disables debug println
-#define DEBUG_TIMESTAMP(...) //!< Disables debug timestamp
+  #define DEBUG_PRINT(...)      //!< Disables debug printing
+  #define DEBUG_PRINTLN(...)    //!< Disables debug println
+  #define DEBUG_TIMESTAMP(...)  //!< Disables debug timestamp
 #endif
 
 /* Macro for trace output */
 #if MFRC630_VERBOSITY >= MFRC630_VERBOSITY_TRACE
-#define TRACE_PRINT(...) Serial.print(__VA_ARGS__)
-#define TRACE_PRINTLN(...) Serial.println(__VA_ARGS__)
-#define TRACE_TIMESTAMP()                                                      \
-  Serial.print(F("\t. [+"));                                                   \
-  Serial.print(millis());                                                      \
-  Serial.print(F("ms] "));
+  #define TRACE_PRINT(...)   Serial.print(__VA_ARGS__)
+  #define TRACE_PRINTLN(...) Serial.println(__VA_ARGS__)
+  #define TRACE_TIMESTAMP()    \
+    Serial.print(F("\t. [+")); \
+    Serial.print(millis());    \
+    Serial.print(F("ms] "));
 #else
-#define TRACE_PRINT(...)     //!< Disables trace output printing
-#define TRACE_PRINTLN(...)   //!< Disables trace output println
-#define TRACE_TIMESTAMP(...) //!< Disables trace output timestamp
+  #define TRACE_PRINT(...)      //!< Disables trace output printing
+  #define TRACE_PRINTLN(...)    //!< Disables trace output println
+  #define TRACE_TIMESTAMP(...)  //!< Disables trace output timestamp
 #endif
 
 /* Macro for error output */
 #if MFRC630_ALWAYS_DISP_ERRORS
-#define ERROR_PRINT(...) Serial.print(__VA_ARGS__) //!< Enables error printing
-#define ERROR_PRINTLN(...)                                                     \
-  Serial.println(__VA_ARGS__) //!< Enables error println
-#define ERROR_TIMESTAMP()                                                      \
-  Serial.print(F("\t! [+"));                                                   \
-  Serial.print(millis());                                                      \
-  Serial.print(F("ms] ")); //!< Enables error timestamp
+  #define ERROR_PRINT(...)   Serial.print(__VA_ARGS__)    //!< Enables error printing
+  #define ERROR_PRINTLN(...) Serial.println(__VA_ARGS__)  //!< Enables error println
+  #define ERROR_TIMESTAMP()    \
+    Serial.print(F("\t! [+")); \
+    Serial.print(millis());    \
+    Serial.print(F("ms] "));  //!< Enables error timestamp
 #else
-#define ERROR_PRINT(...) DEBUG_PRINT(__VA_ARGS__)
-#define ERROR_PRINTLN(...) DEBUG_PRINTLN(__VA_ARGS__)
-#define ERROR_TIMESTAMP()                                                      \
-  DEBUG_PRINT(F("\t! [+"));                                                    \
-  DEBUG_PRINT(millis());                                                       \
-  DEBUG_PRINT(F("ms] "));
+  #define ERROR_PRINT(...)   DEBUG_PRINT(__VA_ARGS__)
+  #define ERROR_PRINTLN(...) DEBUG_PRINTLN(__VA_ARGS__)
+  #define ERROR_TIMESTAMP()   \
+    DEBUG_PRINT(F("\t! [+")); \
+    DEBUG_PRINT(millis());    \
+    DEBUG_PRINT(F("ms] "));
 #endif
 
 /*!
  * @brief Different cases used for I2C, SPI, and SERIAL data transfer
  */
-enum mfrc630_transport {
-  MFRC630_TRANSPORT_I2C = 0,
-  MFRC630_TRANSPORT_SPI = 1,
-  MFRC630_TRANSPORT_SERIAL = 2
-};
+enum mfrc630_transport { MFRC630_TRANSPORT_I2C = 0, MFRC630_TRANSPORT_SPI = 1, MFRC630_TRANSPORT_SERIAL = 2 };
 
 /**
  * Driver for the Adafruit MFRC630 RFID front-end.
  */
 class Adafruit_MFRC630 {
-public:
+ public:
   /**
    * Default I2C bus constructor
    *
@@ -116,8 +111,7 @@ public:
    * @note This instance of the constructor requires the 'transport'
    *       parameter to distinguish is from the default I2C version.
    */
-  Adafruit_MFRC630(enum mfrc630_transport transport, int8_t cs,
-                   int8_t pdown_pin = -1);
+  Adafruit_MFRC630(enum mfrc630_transport transport, int8_t cs, int8_t pdown_pin = -1);
 
   /**
    * SW serial bus constructor
@@ -133,6 +127,19 @@ public:
    * @return True if init succeeded, otherwise false.
    */
   bool begin(void);
+
+  /**
+   * Initialises the internal PLL.
+   *
+   * @param ClkOutSel        The HW peripheral to drive pin CLKOUT
+   * @param ClkOut_En        Enable pin CLKOUT
+   * @param PLL_PD           PLL power-down mode
+   * @param PLLDiv_FB        PLL feedback divider
+   *
+   * For information about these parameters, please check page #91 of this NXP document: "MFRC631 - High-performance ISO/IEC 14443
+   * A/B frontend MFRC631 and MFRC631 plus - Rev. 4.9 - 23 June 20221 - 227449"
+   */
+  void configPLLControl(mfrc630PLLClkOutSel ClkOutSel, bool ClkOut_En, bool PLL_PD, mfrc630PLLDivFB PLLDivFB, uint8_t PLL_DivOut);
 
   /* FIFO helpers (see section 7.5) */
   /**
@@ -304,13 +311,11 @@ public:
    */
   uint16_t ntagWritePage(uint16_t pagenum, uint8_t *buf);
 
-  //KKK
-  void EEPROMRead(uint16_t address, uint8_t length, uint8_t* buffer);
+  void EEPROMRead(uint16_t address, uint8_t length, uint8_t *buffer);
 
-  //KKK
-  void write8(byte reg, byte value);
+  void mifareHalt(void);
 
-private:
+ private:
   int8_t _pdown;
   uint8_t _i2c_addr;
   TwoWire *_wire;
@@ -318,7 +323,7 @@ private:
   int8_t _cs;
   enum mfrc630_transport _transport;
 
-  //KKK void write8(byte reg, byte value);
+  void write8(byte reg, byte value);
   void writeBuffer(byte reg, uint16_t len, uint8_t *buffer);
   byte read8(byte reg);
 

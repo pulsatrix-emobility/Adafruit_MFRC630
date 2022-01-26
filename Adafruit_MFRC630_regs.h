@@ -88,34 +88,26 @@ enum mfrc630reg {
 
 /*! See Table 7.10.2: Command Set */
 enum mfrc630cmd {
-  MFRC630_CMD_IDLE = 0x00, /**< Cancels current command */
-  MFRC630_CMD_LPCD = 0x01, /**< Low power card detection */
-  MFRC630_CMD_LOADKEY =
-      0x02, /**< Reads a 6 byte MIFARE key and puts it into KEY BUFFER */
-  MFRC630_CMD_MFAUTHENT = 0x03, /**< Performs Mifare Classic authentication */
-  MFRC630_CMD_RECEIVE = 0x05,   /**< Activates the receive circuit */
-  MFRC630_CMD_TRANSMIT = 0x06,  /**< Transmits data from the FIFO buffer */
-  MFRC630_CMD_TRANSCEIVE =
-      0x07, /**< Transmits data from the FIFO buffer and automatically activates
-               the receive buffer when finished */
-  MFRC630_CMD_WRITEE2 = 0x08, /**< Gets 1 byte from FIFO and writes to EEPROM */
-  MFRC630_CMD_WRITEE2PAGE =
-      0x09, /**< Gets up to 64 bytes from FIFO and writes to EEPROM */
-  MFRC630_CMD_READE2 =
-      0x0A, /**< Reads data from EEPROM and copies it into the FIFO buffer */
-  MFRC630_CMD_LOADREG =
-      0x0C, /**< Reads data from the internal EEPROM and initializes the MFRC630
-               registers. EEPROM address needs to be within EEPROM sector 2 */
-  MFRC630_CMD_LOADPROTOCOL =
-      0x0D, /**< Reads data from the internal EEPROM and initializes the MFRC630
-               registers needed for a protocol change. */
-  MFRC630_CMD_LOADKEYE2 =
-      0x0E, /**< Copies a key from EEPROM into the key buffer */
-  MFRC630_CMD_STOREKEYE2 =
-      0x0F,                   /**< Stores a MIFARE key (6 bytes) into EEPROM */
-  MFRC630_CMD_READRNR = 0x1C, /**< Copies bytes from the random number generator
-                                 into the FIFO buffer until the FIFO is full */
-  MFRC630_CMD_SOFTRESET = 0x1F /**< SW resets the MFRC630 */
+  MFRC630_CMD_IDLE = 0x00,         /**< Cancels current command */
+  MFRC630_CMD_LPCD = 0x01,         /**< Low power card detection */
+  MFRC630_CMD_LOADKEY = 0x02,      /**< Reads a 6 byte MIFARE key and puts it into KEY BUFFER */
+  MFRC630_CMD_MFAUTHENT = 0x03,    /**< Performs Mifare Classic authentication */
+  MFRC630_CMD_RECEIVE = 0x05,      /**< Activates the receive circuit */
+  MFRC630_CMD_TRANSMIT = 0x06,     /**< Transmits data from the FIFO buffer */
+  MFRC630_CMD_TRANSCEIVE = 0x07,   /**< Transmits data from the FIFO buffer and automatically activates
+                                      the receive buffer when finished */
+  MFRC630_CMD_WRITEE2 = 0x08,      /**< Gets 1 byte from FIFO and writes to EEPROM */
+  MFRC630_CMD_WRITEE2PAGE = 0x09,  /**< Gets up to 64 bytes from FIFO and writes to EEPROM */
+  MFRC630_CMD_READE2 = 0x0A,       /**< Reads data from EEPROM and copies it into the FIFO buffer */
+  MFRC630_CMD_LOADREG = 0x0C,      /**< Reads data from the internal EEPROM and initializes the MFRC630
+                                      registers. EEPROM address needs to be within EEPROM sector 2 */
+  MFRC630_CMD_LOADPROTOCOL = 0x0D, /**< Reads data from the internal EEPROM and initializes the MFRC630
+                                      registers needed for a protocol change. */
+  MFRC630_CMD_LOADKEYE2 = 0x0E,    /**< Copies a key from EEPROM into the key buffer */
+  MFRC630_CMD_STOREKEYE2 = 0x0F,   /**< Stores a MIFARE key (6 bytes) into EEPROM */
+  MFRC630_CMD_READRNR = 0x1C,      /**< Copies bytes from the random number generator
+                                      into the FIFO buffer until the FIFO is full */
+  MFRC630_CMD_SOFTRESET = 0x1F     /**< SW resets the MFRC630 */
 };
 
 /*! ISO14443 Commands (see ISO-14443-3) */
@@ -129,6 +121,7 @@ enum iso14443_cmd {
 
 /*! Mifare Commands */
 enum mifare_cmd {
+  MIFARE_CMD_HALT = 0x50,
   MIFARE_CMD_AUTH_A = 0x60,
   MIFARE_CMD_AUTH_B = 0x61,
   MIFARE_CMD_READ = 0x30,
@@ -183,9 +176,8 @@ enum mfrc630irq0 {
   MFRC630IRQ0_IDLEIRQ = (1 << 4),    /**< Command terminated by itself. */
   MFRC630IRQ0_TXIRQ = (1 << 3),      /**< Data transmission complete */
   MFRC630IRQ0_RXIRQ = (1 << 2),      /**< Receiver detected end of stream */
-  MFRC630IRQ0_ERRIRQ =
-      (1 << 1), /**< FifoWrErr, FiFoOvl, ProtErr, NoDataErr, IntegErr. */
-  MFRC630IRQ0_RXSOF = (1 << 0) /**< RX start of frame detected. */
+  MFRC630IRQ0_ERRIRQ = (1 << 1),     /**< FifoWrErr, FiFoOvl, ProtErr, NoDataErr, IntegErr. */
+  MFRC630IRQ0_RXSOF = (1 << 0)       /**< RX start of frame detected. */
 };
 
 /*! MFRC630 interrupt requests 1 */
@@ -203,6 +195,27 @@ enum mfrc630irq1 {
 /*! MFRC630 crypto engine status */
 enum mfrc630status {
   MFRC630STATUS_CRYPTO1ON = (1 << 5) /**< Mifare Classic Crypto engine on */
+};
+
+enum mfrc630PLLClkOutSel {
+  MFRC630_PLLCLKOUTSEL_IO = 0,         /**< pin CLKOUT is used as I/O */
+  MFRC630_PLLCLKOUTSEL_PLL = 1,        /**< pin CLKOUT shows the output of the analog PLL */
+  MFRC630_PLLCLKOUTSEL_0 = 2,          /**< pin CLKOUT is hold on 0 */
+  MFRC630_PLLCLKOUTSEL_1 = 3,          /**< pin CLKOUT is hold on 1 */
+  MFRC630_PLLCLKOUTSEL_27p12MHZ = 4,   /**< pin CLKOUT shows 27.12MHZ derived from the crystal */
+  MFRC630_PLLCLKOUTSEL_13p56MHZ = 5,   /**< pin CLKOUT shows 13.56MHZ derived from the crystal */
+  MFRC630_PLLCLKOUTSEL_6p78MHZ = 6,    /**< pin CLKOUT shows 6.78MHZ derived from the crystal */
+  MFRC630_PLLCLKOUTSEL_3p39MHZ = 7,    /**< pin CLKOUT shows 3.39MHZ derived from the crystal */
+  MFRC630_PLLCLKOUTSEL_TIMER0OVR = 8,  /**< pin CLKOUT is toggled by Timer0 overflow */
+  MFRC630_PLLCLKOUTSEL_TIMER1OVR = 9,  /**< pin CLKOUT is toggled by Timer1 overflow */
+  MFRC630_PLLCLKOUTSEL_TIMER2OVR = 10, /**< pin CLKOUT is toggled by Timer2 overflow */
+  MFRC630_PLLCLKOUTSEL_TIMER3OVR = 11, /**< pin CLKOUT is toggled by Timer3 overflow */
+};
+
+enum mfrc630PLLDivFB {
+  MFRC630_PLLDIVFB_312MHZ = 0, /**< PLL VCO frequency = 312MHz */
+  MFRC630_PLLDIVFB_366MHZ = 1, /**< PLL VCO frequency = 366MHz */
+  MFRC630_PLLDIVFB_380MHz = 2, /**< PLL VCO frequency = 380MHz */
 };
 
 #endif
