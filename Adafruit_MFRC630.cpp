@@ -417,11 +417,11 @@ int16_t Adafruit_MFRC630::readFIFOLen(void) {
 
   /* Read the MFRC630_REG_FIFO_LENGTH register */
   /* In 512 byte mode, the upper two bits are stored in FIFO_CONTROL */
-  byte hi = read8(MFRC630_REG_FIFO_CONTROL);
-  byte lo = read8(MFRC630_REG_FIFO_LENGTH);
+  uint8_t hi = read8(MFRC630_REG_FIFO_CONTROL);
+  uint8_t lo = read8(MFRC630_REG_FIFO_LENGTH);
 
   /* Determine len based on FIFO size (255 byte or 512 byte mode) */
-  int16_t l = (hi & 0x80) ? lo : (((hi & 0x3) << 8) | lo);
+  uint16_t l = (hi & 0x80) ? lo : (((((uint16_t) hi) & 0x03) << 8) | lo);
 
   DEBUG_TIMESTAMP();
   DEBUG_PRINT(F("FIFO contains "));
@@ -743,15 +743,19 @@ uint16_t Adafruit_MFRC630::iso14443aCommand(enum iso14443_cmd cmd) {
   writeCommand(MFRC630_CMD_TRANSCEIVE, 1, send_req);
 
   /* Wait here until we're done reading, get an error, or timeout. */
-  /* TODO: Update to use timeout parameter! */
   DEBUG_TIMESTAMP();
   DEBUG_PRINTLN(F("F. Waiting for a response or timeout."));
-  uint8_t irqval = 0;
-  while (!(irqval & MFRC630IRQ1_TIMER0IRQ)) {
-    irqval = read8(MFRC630_REG_IRQ1);
+  uint8_t irq1_value = 0;
+  uint32_t timeoutStart = millis();
+  /* Start WHILE with simple 100ms timeout or else this piece of code could hang indefinitely */
+  while (!(irq1_value & MFRC630IRQ1_TIMER0IRQ)) {
+    irq1_value = read8(MFRC630_REG_IRQ1);
     /* Check for a global interrrupt, which can only be ERR or RX. */
-    if (irqval & MFRC630IRQ1_GLOBALIRQ) {
+    if (irq1_value & MFRC630IRQ1_GLOBALIRQ) {
       break;
+    }
+    if (((millis() - timeoutStart) > 100)) {
+      return (0);
     }
   }
 
@@ -759,12 +763,12 @@ uint16_t Adafruit_MFRC630::iso14443aCommand(enum iso14443_cmd cmd) {
   writeCommand(MFRC630_CMD_IDLE);
 
   /* Check the RX IRQ, and exit appropriately if it has fired (error). */
-  irqval = read8(MFRC630_REG_IRQ0);
-  if ((!(irqval & MFRC630IRQ0_RXIRQ) || (irqval & MFRC630IRQ0_ERRIRQ))) {
+  irq1_value = read8(MFRC630_REG_IRQ0);
+  if ((!(irq1_value & MFRC630IRQ0_RXIRQ) || (irq1_value & MFRC630IRQ0_ERRIRQ))) {
     DEBUG_TIMESTAMP();
     DEBUG_PRINTLN(F("ERROR: No RX flag set, transceive failed or timed out."));
     /* Display the error message if ERROR IRQ is set. */
-    if (irqval & MFRC630IRQ0_ERRIRQ) {
+    if (irq1_value & MFRC630IRQ0_ERRIRQ) {
       uint8_t error = read8(MFRC630_REG_ERROR);
       /* Only display the error if it isn't a timeout. */
       if (error) {
@@ -864,7 +868,7 @@ uint8_t Adafruit_MFRC630::iso14443aSelect(uint8_t *uid, uint8_t *sak) {
     write8(MFRC630_REG_TX_CRC_PRESET, 0x18);
     write8(MFRC630_REG_RX_CRC_CON, 0x18);
 
-    /* As per ISO14443-3, limit coliision checks to 32 attempts. */
+    /* As per ISO14443-3, limit collision checks to 32 attempts. */
     uint8_t cnum;
     DEBUG_TIMESTAMP();
     DEBUG_PRINTLN(F("b. Collision detection (max 32 attempts)."));
@@ -907,11 +911,16 @@ uint8_t Adafruit_MFRC630::iso14443aSelect(uint8_t *uid, uint8_t *sak) {
 
       /* Wait until the command execution is complete. */
       uint8_t irq1_value = 0;
+      uint32_t timeoutStart = millis();
+      /* Start WHILE with simple 100ms timeout or else this piece of code could hang indefinitely */
       while (!(irq1_value & MFRC630IRQ1_TIMER0IRQ)) {
         irq1_value = read8(MFRC630_REG_IRQ1);
         /* Check for a global interrrupt, which can only be ERR or RX. */
         if (irq1_value & MFRC630IRQ1_GLOBALIRQ) {
           break;
+        }
+        if (((millis() - timeoutStart) > 100)) {
+          return (0);
         }
       }
 
@@ -967,12 +976,16 @@ uint8_t Adafruit_MFRC630::iso14443aSelect(uint8_t *uid, uint8_t *sak) {
       } else {
         /* Probably no card */
         DEBUG_TIMESTAMP();
-        DEBUG_PRINTLN(F("No error and no data = No card"));
+        DEBUG_PRINTLN(F("No error and no data = No card or no more cards to select"));
         return 0;
       } /* End: if (irq0_value & (1 << 1)) */
 
       /* Read the UID so far */
       uint16_t rxlen = readFIFOLen();
+      // If "rxlen" invalid (noise on the line or MFRC630 error), then return immediately with no card
+      if (rxlen > 5) {
+        return (0);
+      }
       uint8_t buf[5]; /* UID = 4 bytes + BCC */
       readFIFO(rxlen < 5 ? rxlen : 5, buf);
 
@@ -985,7 +998,6 @@ uint8_t Adafruit_MFRC630::iso14443aSelect(uint8_t *uid, uint8_t *sak) {
         uid_this_level[(kbits / 8) + rbx] |= buf[rbx];
       }
       kbits += coll_p;
-
       if ((kbits >= 32)) {
         DEBUG_TIMESTAMP();
         DEBUG_PRINT(F("Leaving collision loop: uid "));
@@ -1004,7 +1016,7 @@ uint8_t Adafruit_MFRC630::iso14443aSelect(uint8_t *uid, uint8_t *sak) {
     uint8_t bcc_val = uid_this_level[4];
     uint8_t bcc_calc = uid_this_level[0] ^ uid_this_level[1] ^ uid_this_level[2] ^ uid_this_level[3];
     if (bcc_val != bcc_calc) {
-      DEBUG_PRINTLN(F("ERROR: BCC mistmatch!\n"));
+      DEBUG_PRINTLN(F("ERROR: BCC mismatch!\n"));
       return 0;
     }
 
@@ -1035,13 +1047,19 @@ uint8_t Adafruit_MFRC630::iso14443aSelect(uint8_t *uid, uint8_t *sak) {
 
     /* Wait until the command execution is complete. */
     uint8_t irq1_value = 0;
+    uint32_t timeoutStart = millis();
+    /* Start WHILE with simple 100ms timeout or else this piece of code could hang indefinitely */
     while (!(irq1_value & MFRC630IRQ1_TIMER0IRQ)) {
       irq1_value = read8(MFRC630_REG_IRQ1);
       /* Check for a global interrrupt, which can only be ERR or RX. */
       if (irq1_value & MFRC630IRQ1_GLOBALIRQ) {
         break;
       }
+      if (((millis() - timeoutStart) > 100)) {
+        return (0);
+      }
     }
+
     writeCommand(MFRC630_CMD_IDLE);
 
     /* Check the source of exiting the loop. */
@@ -1183,11 +1201,16 @@ bool Adafruit_MFRC630::mifareAuth(uint8_t key_type, uint8_t blocknum, uint8_t *u
 
   /* Wait until the command execution is complete. */
   uint8_t irq1_value = 0;
+  uint32_t timeoutStart = millis();
+  /* Start WHILE with simple 100ms timeout or else this piece of code could hang indefinitely */
   while (!(irq1_value & MFRC630IRQ1_TIMER0IRQ)) {
     irq1_value = read8(MFRC630_REG_IRQ1);
     /* Check for a global interrrupt, which can only be ERR or RX. */
     if (irq1_value & MFRC630IRQ1_GLOBALIRQ) {
       break;
+    }
+    if (((millis() - timeoutStart) > 100)) {
+      return (0);
     }
   }
 
@@ -1425,14 +1448,19 @@ uint16_t Adafruit_MFRC630::mifareWriteBlock(uint16_t blocknum, uint8_t *buf) {
   writeCommand(MFRC630_CMD_TRANSCEIVE, 16, buf);
 
   /* Wait until the command execution is complete. */
-  irq1_value = 0;
+  uint32_t timeoutStart = millis();
+  /* Start WHILE with simple 100ms timeout or else this piece of code could hang indefinitely */
   while (!(irq1_value & MFRC630IRQ1_TIMER0IRQ)) {
     irq1_value = read8(MFRC630_REG_IRQ1);
     /* Check for a global interrrupt, which can only be ERR or RX. */
     if (irq1_value & MFRC630IRQ1_GLOBALIRQ) {
       break;
     }
+    if (((millis() - timeoutStart) > 100)) {
+      return (0);
+    }
   }
+
   writeCommand(MFRC630_CMD_IDLE);
 
   /* Check if we timed out or got a response. */
