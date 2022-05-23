@@ -173,18 +173,18 @@ byte Adafruit_MFRC630::read8(byte reg) {
       tx[0] = (reg << 1) | 0x01;
       _serial->write(tx[0]);
       while (!_serial->available()) {
-        delay(1);
+        delay(10);
         timeout--;
         if (timeout == 0) {
           return 0;
         }
       }
       resp = _serial->read();
-      delay(1);
+      delay(10);
       /* Check for stray byte(s) */
       while (_serial->available()) {
         _serial->read();
-        delay(1);
+        delay(10);
       }
       break;
   }
@@ -352,7 +352,7 @@ bool Adafruit_MFRC630::begin() {
     digitalWrite(_pdown, HIGH);
     digitalWrite(_pdown, LOW);
     /* Typical 2.5ms startup delay */
-    delay(5);
+    delay(10);
   }
 
   /* Check device ID for bus response */
@@ -636,7 +636,7 @@ void Adafruit_MFRC630::printError(enum mfrc630errors err) {
     /* Halt execution here if we're not in release mode! */
 #if MFRC630_VERBOSITY > MFRC630_VERBOSITY_RELEASE
   while (1) {
-    delay(1);
+    delay(10);
   }
 #endif
 }
