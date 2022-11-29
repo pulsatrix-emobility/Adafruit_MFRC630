@@ -315,7 +315,7 @@ Adafruit_MFRC630::Adafruit_MFRC630(Stream *serial, int8_t pdown_pin) {
     @brief  Sets up the HW
 */
 /**************************************************************************/
-bool Adafruit_MFRC630::begin() {
+bool Adafruit_MFRC630::begin(bool beginWire = true) {
   /* Display alert for DEBUG and TRACE output. */
   DEBUG_PRINTLN(F("\tDebug output enabled: D [+ms] Message"));
   TRACE_PRINTLN(F("\tTrace output enabled: . [+ms] Message"));
@@ -326,7 +326,8 @@ bool Adafruit_MFRC630::begin() {
   switch (_transport) {
     case MFRC630_TRANSPORT_I2C:
       DEBUG_PRINTLN(F("Initialising I2C"));
-      _wire->begin();
+      if (beginWire)
+        _wire->begin();
       break;
     case MFRC630_TRANSPORT_SPI:
       DEBUG_PRINTLN(F("Initialising SPI (Mode 0, MSB, DIV16)"));
