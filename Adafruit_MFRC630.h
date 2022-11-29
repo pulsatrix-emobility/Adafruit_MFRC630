@@ -126,7 +126,7 @@ class Adafruit_MFRC630 {
    *
    * @return True if init succeeded, otherwise false.
    */
-  bool begin(void);
+  bool begin(bool beginWire);
 
   /**
    * Initialises the internal PLL.
