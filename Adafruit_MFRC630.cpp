@@ -752,7 +752,7 @@ uint16_t Adafruit_MFRC630::iso14443aCommand(enum iso14443_cmd cmd) {
   /* Start WHILE with simple 100ms timeout or else this piece of code could hang indefinitely */
   while (!(irq1_value & MFRC630IRQ1_TIMER0IRQ)) {
     irq1_value = read8(MFRC630_REG_IRQ1);
-    /* Check for a global interrrupt, which can only be ERR or RX. */
+    /* Check for a global interrupt, which can only be ERR or RX. */
     if (irq1_value & MFRC630IRQ1_GLOBALIRQ) {
       break;
     }
@@ -788,12 +788,12 @@ uint16_t Adafruit_MFRC630::iso14443aCommand(enum iso14443_cmd cmd) {
     /*
      * If we have 2 bytes for the response, it's the ATQA.
      *
-     * See ISO14443-3 6.3.2 for help in interpretting the ATQA value.
+     * See ISO14443-3 6.3.2 for help in interpreting the ATQA value.
      *
      * "After a REQA Command is transmitted by the PCD, all
      * PICCs in the IDLE State shall respond synchronously with ATQA."
      *
-     * 0x44 = 4 bit frame anticollision
+     * 0x44 = 4 bit frame anti-collision
      *        UID size = double
      */
     readFIFO(rxlen, (uint8_t *) &atqa);
